@@ -25,6 +25,21 @@ fn disassemble_instruction(chunk: &Chunk, c: &OpCode, offset: usize, line: &usiz
         OpCode::OpConstant { index } => {
             constant_instruction("OpConstant", chunk, index, offset)
         }
+        OpCode::OpNegate => {
+            simple_instruction("OpNegate", offset)
+        }
+        OpCode::OpAdd => {
+            simple_instruction("OpAdd", offset)
+        }
+        OpCode::OpSubtract => {
+            simple_instruction("OpSubtract", offset)
+        }
+        OpCode::OpMultiply => {
+            simple_instruction("OpMultiply", offset)
+        }
+        OpCode::OpDivide => {
+            simple_instruction("OpDivide", offset)
+        }
     }
 }
 
@@ -40,6 +55,6 @@ fn constant_instruction(name: &str, chunk: &Chunk, index: &usize, offset: usize)
     offset + 2
 }
 
-fn print_value(value: f64) {
+pub fn print_value(value: f64) {
     print!("{}", value);
 }

@@ -1,6 +1,12 @@
+#[derive(Debug, Clone)]
 pub enum OpCode {
     OpConstant {index: usize},
+    OpNegate,
     OpReturn,
+    OpAdd,
+    OpSubtract,
+    OpMultiply,
+    OpDivide,
 }
 
 pub struct Chunk {
