@@ -1,4 +1,5 @@
 use crate::chunk::{Chunk, OpCode};
+use crate::compile::compile;
 use crate::debug::print_value;
 
 pub struct Vm {
@@ -20,11 +21,17 @@ enum BinaryOp {
 }
 
 impl Vm {
-    pub fn new(chunk: Chunk) -> Self {
+    pub fn new() -> Self {
         Self {
-            chunk,
+            chunk: Chunk::new(),
+            // chunk,
             stack: vec![],
         }
+    }
+
+    pub fn interpret_src(&self, source: &str) -> InterpretResult {
+        compile(source);
+        return InterpretResult::Ok;
     }
 
     pub fn interpret(&mut self) -> InterpretResult {
@@ -61,7 +68,7 @@ impl Vm {
             BinaryOp::Add => a + b,
             BinaryOp::Subtract => a - b,
             BinaryOp::Multiply => a * b,
-            BinaryOp::Divide =>  a / b,
+            BinaryOp::Divide => a / b,
         })
     }
 

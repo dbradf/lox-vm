@@ -4,13 +4,23 @@ pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
     println!("== {} ==", name);
     let mut offset: usize = 0;
     let mut prev_line = None;
-    chunk.code.iter().zip(chunk.lines.iter()).for_each(|(c, l)| {
-        offset = disassemble_instruction(chunk, c, offset, l, &prev_line);
-        prev_line = Some(l);
-    });
+    chunk
+        .code
+        .iter()
+        .zip(chunk.lines.iter())
+        .for_each(|(c, l)| {
+            offset = disassemble_instruction(chunk, c, offset, l, &prev_line);
+            prev_line = Some(l);
+        });
 }
 
-fn disassemble_instruction(chunk: &Chunk, c: &OpCode, offset: usize, line: &usize, prev_line: &Option<&usize>) -> usize {
+fn disassemble_instruction(
+    chunk: &Chunk,
+    c: &OpCode,
+    offset: usize,
+    line: &usize,
+    prev_line: &Option<&usize>,
+) -> usize {
     print!("{:0>4} ", offset);
     if prev_line == &Some(line) {
         print!("   | ");
@@ -19,27 +29,13 @@ fn disassemble_instruction(chunk: &Chunk, c: &OpCode, offset: usize, line: &usiz
     }
 
     match c {
-        OpCode::OpReturn => {
-            simple_instruction("OpReturn", offset)
-        }
-        OpCode::OpConstant { index } => {
-            constant_instruction("OpConstant", chunk, index, offset)
-        }
-        OpCode::OpNegate => {
-            simple_instruction("OpNegate", offset)
-        }
-        OpCode::OpAdd => {
-            simple_instruction("OpAdd", offset)
-        }
-        OpCode::OpSubtract => {
-            simple_instruction("OpSubtract", offset)
-        }
-        OpCode::OpMultiply => {
-            simple_instruction("OpMultiply", offset)
-        }
-        OpCode::OpDivide => {
-            simple_instruction("OpDivide", offset)
-        }
+        OpCode::OpReturn => simple_instruction("OpReturn", offset),
+        OpCode::OpConstant { index } => constant_instruction("OpConstant", chunk, index, offset),
+        OpCode::OpNegate => simple_instruction("OpNegate", offset),
+        OpCode::OpAdd => simple_instruction("OpAdd", offset),
+        OpCode::OpSubtract => simple_instruction("OpSubtract", offset),
+        OpCode::OpMultiply => simple_instruction("OpMultiply", offset),
+        OpCode::OpDivide => simple_instruction("OpDivide", offset),
     }
 }
 

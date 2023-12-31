@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub enum OpCode {
-    OpConstant {index: usize},
+    OpConstant { index: usize },
     OpNegate,
     OpReturn,
     OpAdd,
@@ -32,6 +32,5 @@ impl Chunk {
     pub fn add_constant(&mut self, value: f64) -> usize {
         self.constants.push(value);
         self.constants.len() - 1
-
     }
 }
