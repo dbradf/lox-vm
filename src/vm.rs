@@ -1,5 +1,5 @@
 use crate::chunk::{Chunk, OpCode};
-use crate::compile::compile;
+use crate::compile::Parser;
 use crate::debug::print_value;
 
 pub struct Vm {
@@ -29,12 +29,14 @@ impl Vm {
         }
     }
 
-    pub fn interpret_src(&self, source: &str) -> InterpretResult {
-        compile(source);
-        return InterpretResult::Ok;
+    pub fn interpret_src(&mut self, source: &str) -> InterpretResult {
+        let mut parser = Parser::new(source);
+        let chunk = parser.compile();
+        self.chunk = chunk;
+        self.run()
     }
 
-    pub fn interpret(&mut self) -> InterpretResult {
+    pub fn run(&mut self) -> InterpretResult {
         for c in &self.chunk.code.clone() {
             match c {
                 OpCode::OpConstant { index } => {

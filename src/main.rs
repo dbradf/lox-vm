@@ -35,20 +35,20 @@ fn main() {
     let mut vm = Vm::new();
     let mut args = args();
     match args.len() {
-        1 => repl(&vm),
-        2 => run_file(&vm, args.nth(1).unwrap().as_mut_str()),
+        1 => repl(&mut vm),
+        2 => run_file(&mut vm, args.nth(1).unwrap().as_mut_str()),
         _ => {
             println!("Usage: clox [path]");
             exit(64);
         }
     }
 
-    vm.interpret();
+    vm.run();
 
     // disassemble_chunk(&chunk, "test chunk");
 }
 
-fn repl(vm: &Vm) {
+fn repl(vm: &mut Vm) {
     let stdin = io::stdin();
     print!("> ");
     for line in stdin.lock().lines() {
@@ -57,7 +57,7 @@ fn repl(vm: &Vm) {
     }
 }
 
-fn run_file(vm: &Vm, path: &str) {
+fn run_file(vm: &mut Vm, path: &str) {
     let source = std::io::read_to_string(File::open(path).unwrap()).unwrap();
     let result = vm.interpret_src(&source);
 }

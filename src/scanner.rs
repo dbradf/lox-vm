@@ -5,14 +5,14 @@ pub struct Scanner {
     line: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub t_type: TokenType,
     pub token: String,
     pub line: usize,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum TokenType {
     LeftParen,
     RightParen,

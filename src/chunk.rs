@@ -9,6 +9,7 @@ pub enum OpCode {
     OpDivide,
 }
 
+#[derive(Clone, Debug)]
 pub struct Chunk {
     pub code: Vec<OpCode>,
     pub lines: Vec<usize>,
