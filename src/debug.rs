@@ -1,4 +1,5 @@
 use crate::chunk::{Chunk, OpCode};
+use crate::value::Value;
 
 pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
     println!("== {} ==", name);
@@ -36,6 +37,13 @@ fn disassemble_instruction(
         OpCode::OpSubtract => simple_instruction("OpSubtract", offset),
         OpCode::OpMultiply => simple_instruction("OpMultiply", offset),
         OpCode::OpDivide => simple_instruction("OpDivide", offset),
+        OpCode::OpNil => simple_instruction("OpNil", offset),
+        OpCode::OpTrue => simple_instruction("OpTrue", offset),
+        OpCode::OpFalse => simple_instruction("OpFalse", offset),
+        OpCode::OpNot => simple_instruction("OpNot", offset),
+        OpCode::OpEqual => simple_instruction("OpEqual", offset),
+        OpCode::OpGreater => simple_instruction("OpGreater", offset),
+        OpCode::OpLess => simple_instruction("OpLess", offset),
     }
 }
 
@@ -46,11 +54,21 @@ fn simple_instruction(name: &str, offset: usize) -> usize {
 
 fn constant_instruction(name: &str, chunk: &Chunk, index: &usize, offset: usize) -> usize {
     print!("{} {} '", name, index);
-    print_value(chunk.constants[*index]);
+    print_value(&chunk.constants[*index]);
     println!("'");
     offset + 2
 }
 
-pub fn print_value(value: f64) {
-    print!("{}", value);
+pub fn print_value(value: &Value) {
+    match value {
+        Value::Bool(b) => {
+            print!("{}", b);
+        }
+        Value::Nil => {
+            print!("<nil>");
+        }
+        Value::Number(n) => {
+            print!("{}", n);
+        }
+    }
 }

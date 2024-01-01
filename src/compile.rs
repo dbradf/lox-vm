@@ -1,5 +1,6 @@
 use crate::chunk::{Chunk, OpCode};
 use crate::scanner::{Scanner, Token, TokenType};
+use crate::value::Value;
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -51,6 +52,7 @@ enum ParseFn {
     Grouping,
     Binary,
     Number,
+    Literal,
 }
 
 #[derive(Debug, Clone)]
@@ -165,7 +167,7 @@ impl Parser {
             (
                 TokenType::Bang,
                 ParseRule {
-                    prefix: None,
+                    prefix: Some(ParseFn::Unary),
                     infix: None,
                     precedence: Precedence::None,
                 },
@@ -174,8 +176,8 @@ impl Parser {
                 TokenType::BangEqual,
                 ParseRule {
                     prefix: None,
-                    infix: None,
-                    precedence: Precedence::None,
+                    infix: Some(ParseFn::Binary),
+                    precedence: Precedence::Equality,
                 },
             ),
             (
@@ -190,40 +192,40 @@ impl Parser {
                 TokenType::EqualEqual,
                 ParseRule {
                     prefix: None,
-                    infix: None,
-                    precedence: Precedence::None,
+                    infix: Some(ParseFn::Binary),
+                    precedence: Precedence::Equality,
                 },
             ),
             (
                 TokenType::Greater,
                 ParseRule {
                     prefix: None,
-                    infix: None,
-                    precedence: Precedence::None,
+                    infix: Some(ParseFn::Binary),
+                    precedence: Precedence::Comparison,
                 },
             ),
             (
                 TokenType::GreaterEqual,
                 ParseRule {
                     prefix: None,
-                    infix: None,
-                    precedence: Precedence::None,
+                    infix: Some(ParseFn::Binary),
+                    precedence: Precedence::Comparison,
                 },
             ),
             (
                 TokenType::Less,
                 ParseRule {
                     prefix: None,
-                    infix: None,
-                    precedence: Precedence::None,
+                    infix: Some(ParseFn::Binary),
+                    precedence: Precedence::Comparison,
                 },
             ),
             (
                 TokenType::LessEqual,
                 ParseRule {
                     prefix: None,
-                    infix: None,
-                    precedence: Precedence::None,
+                    infix: Some(ParseFn::Binary),
+                    precedence: Precedence::Comparison,
                 },
             ),
             (
@@ -277,7 +279,7 @@ impl Parser {
             (
                 TokenType::False,
                 ParseRule {
-                    prefix: None,
+                    prefix: Some(ParseFn::Literal),
                     infix: None,
                     precedence: Precedence::None,
                 },
@@ -309,7 +311,7 @@ impl Parser {
             (
                 TokenType::Nil,
                 ParseRule {
-                    prefix: None,
+                    prefix: Some(ParseFn::Literal),
                     infix: None,
                     precedence: Precedence::None,
                 },
@@ -357,7 +359,7 @@ impl Parser {
             (
                 TokenType::True,
                 ParseRule {
-                    prefix: None,
+                    prefix: Some(ParseFn::Literal),
                     infix: None,
                     precedence: Precedence::None,
                 },
@@ -407,6 +409,7 @@ impl Parser {
             ParseFn::Grouping => self.grouping(),
             ParseFn::Binary => self.binary(),
             ParseFn::Number => self.number(),
+            ParseFn::Literal => self.literal(),
         }
     }
 
@@ -415,23 +418,6 @@ impl Parser {
         self.expression();
         self.consume(&TokenType::Eof, "Expect end of expression.");
         self.end_compile();
-
-        // let mut line = 0;
-        // loop {
-        //     let token = scanner.scan_token();
-        //     if token.line != line {
-        //         print!("{:4} ", token.line);
-        //         line = token.line;
-        //     } else {
-        //         print!("   | ");
-        //     }
-        //
-        //     println!("{:?} '{}'", token.t_type, token.token);
-        //
-        //     if (token.t_type == TokenType::Eof) {
-        //         break;
-        //     }
-        // }
 
         self.chunk.clone()
     }
@@ -469,7 +455,16 @@ impl Parser {
     fn number(&mut self) {
         let token = &self.previous.clone().unwrap();
         let value = f64::from_str(&token.token).unwrap();
-        self.emit_constant(value);
+        self.emit_constant(Value::Number(value));
+    }
+
+    fn literal(&mut self) {
+        match self.previous.clone().unwrap().t_type {
+            TokenType::False => self.emit_byte(OpCode::OpFalse),
+            TokenType::Nil => self.emit_byte(OpCode::OpNil),
+            TokenType::True => self.emit_byte(OpCode::OpTrue),
+            _ => {}
+        }
     }
 
     fn grouping(&mut self) {
@@ -483,6 +478,7 @@ impl Parser {
         self.parse_precedence(Precedence::Unary);
 
         match operator_type {
+            TokenType::Bang => self.emit_byte(OpCode::OpNot),
             TokenType::Minus => self.emit_byte(OpCode::OpNegate),
             _ => return,
         }
@@ -498,6 +494,12 @@ impl Parser {
             TokenType::Minus => self.emit_byte(OpCode::OpSubtract),
             TokenType::Star => self.emit_byte(OpCode::OpMultiply),
             TokenType::Slash => self.emit_byte(OpCode::OpDivide),
+            TokenType::BangEqual => self.emit_bytes(OpCode::OpEqual, OpCode::OpNot),
+            TokenType::EqualEqual => self.emit_byte(OpCode::OpEqual),
+            TokenType::Greater => self.emit_byte(OpCode::OpGreater),
+            TokenType::GreaterEqual => self.emit_bytes(OpCode::OpLess, OpCode::OpNot),
+            TokenType::Less => self.emit_byte(OpCode::OpLess),
+            TokenType::LessEqual => self.emit_bytes(OpCode::OpGreater, OpCode::OpNot),
             _ => return,
         }
     }
@@ -533,7 +535,13 @@ impl Parser {
         self.chunk.write_chunk(op_code, token.line);
     }
 
-    fn emit_constant(&mut self, value: f64) {
+    fn emit_bytes(&mut self, op_code_0: OpCode, op_code_1: OpCode) {
+        let token = &self.previous.clone().unwrap();
+        self.chunk.write_chunk(op_code_0, token.line);
+        self.chunk.write_chunk(op_code_1, token.line);
+    }
+
+    fn emit_constant(&mut self, value: Value) {
         let index = self.chunk.add_constant(value);
         self.emit_byte(OpCode::OpConstant { index });
     }

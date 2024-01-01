@@ -1,19 +1,28 @@
+use crate::value::Value;
+
 #[derive(Debug, Clone)]
 pub enum OpCode {
     OpConstant { index: usize },
+    OpNil,
+    OpTrue,
+    OpFalse,
     OpNegate,
     OpReturn,
     OpAdd,
     OpSubtract,
     OpMultiply,
     OpDivide,
+    OpNot,
+    OpEqual,
+    OpGreater,
+    OpLess,
 }
 
 #[derive(Clone, Debug)]
 pub struct Chunk {
     pub code: Vec<OpCode>,
     pub lines: Vec<usize>,
-    pub constants: Vec<f64>,
+    pub constants: Vec<Value>,
 }
 
 impl Chunk {
@@ -30,7 +39,7 @@ impl Chunk {
         self.lines.push(line);
     }
 
-    pub fn add_constant(&mut self, value: f64) -> usize {
+    pub fn add_constant(&mut self, value: Value) -> usize {
         self.constants.push(value);
         self.constants.len() - 1
     }

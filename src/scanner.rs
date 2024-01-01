@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Scanner {
     source: String,
     start: usize,
@@ -149,7 +150,7 @@ impl Scanner {
     }
 
     fn slice(&self) -> String {
-        let letters: Vec<String> = (self.start..=self.current)
+        let letters: Vec<String> = (self.start..self.current)
             .map(|i| self.char_at(i).to_string())
             .collect();
 
@@ -245,51 +246,45 @@ impl Scanner {
 
     fn identifier_type(&self) -> TokenType {
         match self.char_at(self.start) {
-            'a' => self.check_keyword(1, 2, "nd", TokenType::And),
-            'c' => self.check_keyword(1, 4, "lass", TokenType::Class),
-            'e' => self.check_keyword(1, 3, "lse", TokenType::Else),
+            'a' => self.check_keyword(3, "and", TokenType::And),
+            'c' => self.check_keyword(5, "class", TokenType::Class),
+            'e' => self.check_keyword(4, "else", TokenType::Else),
             'f' => {
                 if self.current - self.start > 1 {
                     match self.char_at(self.start + 1) {
-                        'a' => self.check_keyword(2, 3, "lse", TokenType::False),
-                        'o' => self.check_keyword(2, 1, "r", TokenType::Or),
-                        'u' => self.check_keyword(2, 1, "n", TokenType::Fun),
+                        'a' => self.check_keyword(5, "false", TokenType::False),
+                        'o' => self.check_keyword(3, "for", TokenType::Or),
+                        'u' => self.check_keyword(3, "fun", TokenType::Fun),
                         _ => TokenType::Identifier,
                     }
                 } else {
                     TokenType::Identifier
                 }
             }
-            'i' => self.check_keyword(1, 1, "f", TokenType::If),
-            'n' => self.check_keyword(1, 2, "il", TokenType::Nil),
-            'o' => self.check_keyword(1, 1, "r", TokenType::Or),
-            'p' => self.check_keyword(1, 4, "rint", TokenType::Print),
-            'r' => self.check_keyword(1, 5, "eturn", TokenType::Return),
-            's' => self.check_keyword(1, 4, "uper", TokenType::Super),
+            'i' => self.check_keyword(2, "if", TokenType::If),
+            'n' => self.check_keyword(3, "nil", TokenType::Nil),
+            'o' => self.check_keyword(2, "or", TokenType::Or),
+            'p' => self.check_keyword(5, "print", TokenType::Print),
+            'r' => self.check_keyword(6, "return", TokenType::Return),
+            's' => self.check_keyword(5, "super", TokenType::Super),
             't' => {
                 if self.current - self.start > 1 {
                     match self.char_at(self.start + 1) {
-                        'h' => self.check_keyword(2, 2, "is", TokenType::This),
-                        'r' => self.check_keyword(2, 2, "ue", TokenType::True),
+                        'h' => self.check_keyword(4, "this", TokenType::This),
+                        'r' => self.check_keyword(4, "true", TokenType::True),
                         _ => TokenType::Identifier,
                     }
                 } else {
                     TokenType::Identifier
                 }
             }
-            'v' => self.check_keyword(1, 2, "var", TokenType::Var),
-            'w' => self.check_keyword(1, 4, "hile", TokenType::While),
+            'v' => self.check_keyword(3, "var", TokenType::Var),
+            'w' => self.check_keyword(5, "while", TokenType::While),
             _ => TokenType::Identifier,
         }
     }
 
-    fn check_keyword(
-        &self,
-        start: usize,
-        length: usize,
-        rest: &str,
-        t_type: TokenType,
-    ) -> TokenType {
+    fn check_keyword(&self, length: usize, rest: &str, t_type: TokenType) -> TokenType {
         if self.current - self.start == length && self.slice() == rest.to_string() {
             t_type
         } else {
