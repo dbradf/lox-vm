@@ -1,16 +1,25 @@
+use crate::object::Obj;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub enum Value {
-    Bool(bool),
-
     #[default]
     Nil,
+    Bool(bool),
     Number(f64),
+    Obj(Obj),
 }
 
 impl Value {
     pub fn is_number(&self) -> bool {
         match self {
             Value::Number(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_string(&self) -> bool {
+        match self {
+            Value::Obj(obj) => obj.is_string(),
             _ => false,
         }
     }

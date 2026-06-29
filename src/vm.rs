@@ -1,6 +1,7 @@
 use crate::chunk::{Chunk, OpCode};
 use crate::compile::Parser;
 use crate::debug::print_value;
+use crate::object::Obj;
 use crate::value::Value;
 
 pub struct Vm {
@@ -66,7 +67,13 @@ impl Vm {
                         InterpretResult::RuntimeError
                     }
                 },
-                OpCode::OpAdd => self.binary_op(BinaryOp::Add),
+                OpCode::OpAdd => {
+                    if self.peek(0).is_string() && self.peek(1).is_string() {
+                        self.concatenate()
+                    } else {
+                        self.binary_op(BinaryOp::Add)
+                    }
+                }
                 OpCode::OpSubtract => self.binary_op(BinaryOp::Subtract),
                 OpCode::OpMultiply => self.binary_op(BinaryOp::Multiply),
                 OpCode::OpDivide => self.binary_op(BinaryOp::Divide),
@@ -107,6 +114,24 @@ impl Vm {
         }
 
         return InterpretResult::CompileError;
+    }
+
+    fn concatenate(&mut self) -> InterpretResult {
+        let a = self.stack.pop().unwrap();
+        let b = self.stack.pop().unwrap();
+
+        match a {
+            Value::Obj(Obj::String(a_str)) => match b {
+                Value::Obj(Obj::String(b_str)) => {
+                    let mut new_str = b_str.clone();
+                    new_str.extend(a_str);
+                    self.stack.push(Value::Obj(Obj::String(new_str)));
+                    InterpretResult::Ok
+                }
+                _ => InterpretResult::RuntimeError,
+            },
+            _ => InterpretResult::RuntimeError,
+        }
     }
 
     fn binary_op(&mut self, op: BinaryOp) -> InterpretResult {

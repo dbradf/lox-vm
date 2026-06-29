@@ -1,4 +1,5 @@
 use crate::chunk::{Chunk, OpCode};
+use crate::object::copy_string;
 use crate::scanner::{Scanner, Token, TokenType};
 use crate::value::Value;
 use std::collections::HashMap;
@@ -53,6 +54,7 @@ enum ParseFn {
     Binary,
     Number,
     Literal,
+    String,
 }
 
 #[derive(Debug, Clone)]
@@ -239,7 +241,7 @@ impl Parser {
             (
                 TokenType::String,
                 ParseRule {
-                    prefix: None,
+                    prefix: Some(ParseFn::String),
                     infix: None,
                     precedence: Precedence::None,
                 },
@@ -410,6 +412,7 @@ impl Parser {
             ParseFn::Binary => self.binary(),
             ParseFn::Number => self.number(),
             ParseFn::Literal => self.literal(),
+            ParseFn::String => self.string(),
         }
     }
 
@@ -465,6 +468,11 @@ impl Parser {
             TokenType::True => self.emit_byte(OpCode::OpTrue),
             _ => {}
         }
+    }
+
+    fn string(&mut self) {
+        let s: Vec<char> = self.previous.clone().unwrap().token.chars().collect();
+        self.emit_constant(Value::Obj(copy_string(&s[1..s.len() - 1])));
     }
 
     fn grouping(&mut self) {

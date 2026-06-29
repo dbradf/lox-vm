@@ -1,4 +1,5 @@
 use crate::chunk::{Chunk, OpCode};
+use crate::object::Obj;
 use crate::value::Value;
 
 pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
@@ -69,6 +70,16 @@ pub fn print_value(value: &Value) {
         }
         Value::Number(n) => {
             print!("{}", n);
+        }
+        Value::Obj(obj) => print_object(obj),
+    }
+}
+
+fn print_object(obj: &Obj) {
+    match obj {
+        Obj::String(items) => {
+            let s: String = items.iter().collect();
+            print!("{s}");
         }
     }
 }
