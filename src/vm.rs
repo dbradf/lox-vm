@@ -103,6 +103,15 @@ impl Vm {
                 }
                 OpCode::OpGreater => self.binary_op(BinaryOp::Greater),
                 OpCode::OpLess => self.binary_op(BinaryOp::Less),
+                OpCode::OpPrint => {
+                    let v = self.stack.pop().unwrap();
+                    print_value(&v);
+                    InterpretResult::Ok
+                }
+                OpCode::OpPop => {
+                    self.stack.pop();
+                    InterpretResult::Ok
+                }
             };
 
             match result {

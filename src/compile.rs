@@ -418,8 +418,11 @@ impl Parser {
 
     pub fn compile(&mut self) -> Chunk {
         self.advance();
-        self.expression();
-        self.consume(&TokenType::Eof, "Expect end of expression.");
+
+        while !self.is_match(&TokenType::Eof) {
+            self.declaration();
+        }
+
         self.end_compile();
 
         self.chunk.clone()
@@ -429,8 +432,21 @@ impl Parser {
         self.emit_return();
     }
 
+    fn is_match(&mut self, token_type: &TokenType) -> bool {
+        if !self.check(token_type) {
+            false
+        } else {
+            self.advance();
+            true
+        }
+    }
+
+    fn check(&self, token_type: &TokenType) -> bool {
+        &self.current.as_ref().unwrap().t_type == token_type
+    }
+
     fn consume(&mut self, token_type: &TokenType, message: &str) {
-        if &self.current.as_ref().unwrap().t_type == token_type {
+        if self.check(token_type) {
             self.advance();
         } else {
             self.error_at_current(message);
@@ -449,6 +465,30 @@ impl Parser {
             let current = &self.current.clone().unwrap();
             self.error_at_current(&current.token);
         }
+    }
+
+    fn declaration(&mut self) {
+        self.statement();
+    }
+
+    fn statement(&mut self) {
+        if self.is_match(&TokenType::Print) {
+            self.print_statement();
+        } else {
+            self.expression_statement();
+        }
+    }
+
+    fn expression_statement(&mut self) {
+        self.expression();
+        self.consume(&TokenType::Semicolon, "Expect ';' after value.");
+        self.emit_byte(OpCode::OpPop);
+    }
+
+    fn print_statement(&mut self) {
+        self.expression();
+        self.consume(&TokenType::Semicolon, "Expect ';' after value.");
+        self.emit_byte(OpCode::OpPrint);
     }
 
     fn expression(&mut self) {

@@ -16,6 +16,9 @@ pub enum OpCode {
     OpEqual,
     OpGreater,
     OpLess,
+
+    OpPrint,
+    OpPop,
 }
 
 #[derive(Clone, Debug)]

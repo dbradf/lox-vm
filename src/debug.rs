@@ -45,6 +45,8 @@ fn disassemble_instruction(
         OpCode::OpEqual => simple_instruction("OpEqual", offset),
         OpCode::OpGreater => simple_instruction("OpGreater", offset),
         OpCode::OpLess => simple_instruction("OpLess", offset),
+        OpCode::OpPrint => simple_instruction("OpPrint", offset),
+        OpCode::OpPop => simple_instruction("OpPop", offset),
     }
 }
 
