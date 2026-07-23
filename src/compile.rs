@@ -467,8 +467,39 @@ impl Parser {
         }
     }
 
+    fn synchronize(&mut self) {
+        self.had_error = false;
+
+        while let Some(current_token) = self.current.clone()
+            && current_token.t_type != TokenType::Eof
+        {
+            if self.previous.clone().unwrap().t_type == TokenType::Semicolon {
+                return;
+            }
+
+            match current_token.t_type {
+                TokenType::Class
+                | TokenType::Fun
+                | TokenType::Var
+                | TokenType::For
+                | TokenType::If
+                | TokenType::While
+                | TokenType::Print
+                | TokenType::Return => {
+                    return;
+                }
+                _ => {}
+            }
+            self.advance();
+        }
+    }
+
     fn declaration(&mut self) {
         self.statement();
+
+        if self.had_error {
+            self.synchronize();
+        }
     }
 
     fn statement(&mut self) {
