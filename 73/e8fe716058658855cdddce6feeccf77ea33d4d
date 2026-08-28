@@ -1,0 +1,22 @@
+src/chunk.rs
+  h_4a24b245cff69f 22-25
+src/compile.rs
+  h_4a24b245cff69f 58,237,409,417,500-504,511-531,576-589,632-633,645,648-651,658-667
+src/debug.rs
+  h_4a24b245cff69f 50-54
+src/object.rs
+  h_4a24b245cff69f 20-25
+src/vm.rs
+  h_4a24b245cff69f 1-2,13,38,119-158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.6.22",
+  "base_commit_sha": "73e8fe716058658855cdddce6feeccf77ea33d4d",
+  "prompts": {},
+  "humans": {
+    "h_4a24b245cff69f": {
+      "author": "David Bradford <dbradf@gmail.com>"
+    }
+  }
+}
