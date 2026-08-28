@@ -47,6 +47,11 @@ fn disassemble_instruction(
         OpCode::OpLess => simple_instruction("OpLess", offset),
         OpCode::OpPrint => simple_instruction("OpPrint", offset),
         OpCode::OpPop => simple_instruction("OpPop", offset),
+        OpCode::OpDefineGlobal { index } => {
+            constant_instruction("OpDefineGlobal", chunk, index, offset)
+        }
+        OpCode::OpGetGlobal { index } => constant_instruction("OpGetGlobal", chunk, index, offset),
+        OpCode::OpSetGlobal { index } => constant_instruction("OpSetGlobal", chunk, index, offset),
     }
 }
 

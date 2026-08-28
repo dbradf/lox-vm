@@ -17,4 +17,10 @@ impl Obj {
             _ => false,
         }
     }
+
+    pub fn as_string(&self) -> String {
+        match self {
+            Obj::String(items) => items.iter().collect(),
+        }
+    }
 }

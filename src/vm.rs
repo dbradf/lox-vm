@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::chunk::{Chunk, OpCode};
 use crate::compile::Parser;
 use crate::debug::print_value;
@@ -8,6 +10,7 @@ pub struct Vm {
     chunk: Chunk,
     stack: Vec<Value>,
     ip: usize,
+    globals: HashMap<String, Value>,
 }
 
 pub enum InterpretResult {
@@ -32,6 +35,7 @@ impl Vm {
             // chunk,
             stack: vec![],
             ip: 0,
+            globals: HashMap::new(),
         }
     }
 
@@ -111,6 +115,46 @@ impl Vm {
                 OpCode::OpPop => {
                     self.stack.pop();
                     InterpretResult::Ok
+                }
+                OpCode::OpDefineGlobal { index } => {
+                    let constant = self.read_constant(*index);
+                    if let Value::Obj(obj) = constant {
+                        let name = obj.as_string();
+                        self.globals.insert(name, self.peek(0));
+                        self.stack.pop();
+                        InterpretResult::Ok
+                    } else {
+                        InterpretResult::RuntimeError
+                    }
+                }
+                OpCode::OpGetGlobal { index } => {
+                    let constant = self.read_constant(*index);
+                    if let Value::Obj(obj) = constant {
+                        let name = obj.as_string();
+                        if let Some(value) = self.globals.get(&name) {
+                            self.stack.push(value.clone());
+                            InterpretResult::Ok
+                        } else {
+                            InterpretResult::RuntimeError
+                        }
+                    } else {
+                        InterpretResult::RuntimeError
+                    }
+                }
+                OpCode::OpSetGlobal { index } => {
+                    let name = self.read_constant(*index);
+                    if let Value::Obj(obj) = name {
+                        let name = obj.as_string();
+                        if self.globals.contains_key(&name) {
+                            self.globals.insert(name, self.peek(0));
+                            InterpretResult::Ok
+                        } else {
+                            self.runtime_error(&format!("Undefined variable '{name}'"));
+                            InterpretResult::RuntimeError
+                        }
+                    } else {
+                        InterpretResult::RuntimeError
+                    }
                 }
             };
 

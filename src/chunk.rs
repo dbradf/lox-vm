@@ -19,6 +19,10 @@ pub enum OpCode {
 
     OpPrint,
     OpPop,
+
+    OpDefineGlobal { index: usize },
+    OpGetGlobal { index: usize },
+    OpSetGlobal { index: usize },
 }
 
 #[derive(Clone, Debug)]

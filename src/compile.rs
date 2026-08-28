@@ -55,6 +55,7 @@ enum ParseFn {
     Number,
     Literal,
     String,
+    Variable,
 }
 
 #[derive(Debug, Clone)]
@@ -233,7 +234,7 @@ impl Parser {
             (
                 TokenType::Identifier,
                 ParseRule {
-                    prefix: None,
+                    prefix: Some(ParseFn::Variable),
                     infix: None,
                     precedence: Precedence::None,
                 },
@@ -405,7 +406,7 @@ impl Parser {
         self.parse_rules.get(t_type).unwrap()
     }
 
-    fn dispatch_parse_fn(&mut self, parse_fn: &ParseFn) {
+    fn dispatch_parse_fn(&mut self, parse_fn: &ParseFn, can_assign: bool) {
         match parse_fn {
             ParseFn::Unary => self.unary(),
             ParseFn::Grouping => self.grouping(),
@@ -413,6 +414,7 @@ impl Parser {
             ParseFn::Number => self.number(),
             ParseFn::Literal => self.literal(),
             ParseFn::String => self.string(),
+            ParseFn::Variable => self.variable(can_assign),
         }
     }
 
@@ -495,11 +497,36 @@ impl Parser {
     }
 
     fn declaration(&mut self) {
-        self.statement();
+        if self.is_match(&TokenType::Var) {
+            self.var_declaration();
+        } else {
+            self.statement();
+        }
 
         if self.had_error {
             self.synchronize();
         }
+    }
+
+    fn var_declaration(&mut self) {
+        let global = self.parse_variable("Expect variable name.");
+
+        if self.is_match(&TokenType::Equal) {
+            self.expression();
+        } else {
+            self.emit_byte(OpCode::OpNil);
+        }
+
+        self.consume(
+            &TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        );
+
+        self.define_variable(global);
+    }
+
+    fn define_variable(&mut self, global: usize) {
+        self.emit_byte(OpCode::OpDefineGlobal { index: global });
     }
 
     fn statement(&mut self) {
@@ -546,6 +573,20 @@ impl Parser {
         self.emit_constant(Value::Obj(copy_string(&s[1..s.len() - 1])));
     }
 
+    fn variable(&mut self, can_assign: bool) {
+        self.named_variable(self.previous.clone().unwrap(), can_assign);
+    }
+
+    fn named_variable(&mut self, name: Token, can_assign: bool) {
+        let index = self.identifier_constant(&name.token);
+        if self.is_match(&TokenType::Equal) && can_assign {
+            self.expression();
+            self.emit_byte(OpCode::OpSetGlobal { index });
+        } else {
+            self.emit_byte(OpCode::OpGetGlobal { index });
+        }
+    }
+
     fn grouping(&mut self) {
         self.expression();
         self.consume(&TokenType::RightParen, "Expect ')' after expression.");
@@ -588,7 +629,8 @@ impl Parser {
         let rule = self.get_rule(&self.previous.clone().unwrap().t_type);
         let prefix_rule = &rule.prefix.clone();
         if let Some(prefix_parse_fn) = prefix_rule {
-            self.dispatch_parse_fn(prefix_parse_fn);
+            let can_assign = precedence <= Precedence::Assignment;
+            self.dispatch_parse_fn(prefix_parse_fn, can_assign);
 
             while precedence
                 <= self
@@ -600,13 +642,27 @@ impl Parser {
                     .get_rule(&self.previous.clone().unwrap().t_type)
                     .clone();
                 if let Some(infix_parse_fn) = &infix_rule.infix {
-                    self.dispatch_parse_fn(infix_parse_fn);
+                    self.dispatch_parse_fn(infix_parse_fn, false);
                 }
+            }
+
+            if can_assign && self.is_match(&TokenType::Equal) {
+                self.error("Invalid assignment target");
             }
             return;
         }
 
         self.error("Expect expression.");
+    }
+
+    fn parse_variable(&mut self, error_message: &str) -> usize {
+        self.consume(&TokenType::Identifier, error_message);
+        self.identifier_constant(&self.previous.clone().unwrap().token)
+    }
+
+    fn identifier_constant(&mut self, name: &str) -> usize {
+        let s: Vec<char> = name.chars().collect();
+        self.chunk.add_constant(Value::Obj(copy_string(&s)))
     }
 
     fn emit_byte(&mut self, op_code: OpCode) {
